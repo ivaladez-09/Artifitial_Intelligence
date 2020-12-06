@@ -2,6 +2,7 @@
 import numpy as np
 from math import exp
 import matplotlib.pyplot as plt
+from matplotlib import cm
 
 
 class ArrayLengthError(Exception):
@@ -12,12 +13,15 @@ class ArrayLengthError(Exception):
 class FuzzyNet:
     """"""
 
-    def __init__(self):
+    def __init__(self, z=None):
         """"""
         self.X = np.array([1, 2, 3, 4], dtype=np.uint8)
         self.Y = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=np.uint8)
         self.WEIGHT = 5  # mx1 = mx1'(0-255) / weight
-        self.Z = self._read_z()  # Output Supervised data
+        if z is None:
+            self.Z = self._read_z()  # Output Supervised data
+        else:
+            self.Z = z  # Output from survey
         # mf stands for Membership function
         self.mfx_number = 3
         self.mfy_number = 3
@@ -98,7 +102,7 @@ class FuzzyNet:
                 for mfxy, p, q, r in zip(mfx_mfy, parameters['p'], parameters['q'], parameters['r']):
                     inferences.append(mfxy * ((p * x) + (q * y) + r))
 
-                inferences_summation = sum(inferences) / 3
+                inferences_summation = sum(inferences) / 3  # To avoid numbers way higher than 100
 
                 # Use uint8 values in range of 0-100
                 row_x.append(np.uint8(min(inferences_summation / mf_summation, 100)))
@@ -114,17 +118,49 @@ class FuzzyNet:
 
     def plot(self, matrix_z: np.array):
         """"""
-        pass
+        Y, X = np.meshgrid(self.Y, self.X)
 
-    def get_FA(self, chromosome: np.array) -> np.uint8:
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        surf = ax.plot_surface(X, Y, matrix_z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+
+        # Customize the z axis.
+        ax.set_zlim(0, 100)
+
+        # Add a color bar which maps values to colors.
+        fig.colorbar(surf, shrink=0.5, aspect=20)
+
+        plt.show()
+
+    def get_average_matrix_z(self, population_matrix_z: np.array):
         """"""
-        parameters = self.get_parsed_chromosome(chromosome)
-        # print(parameters.values())
+        average = np.zeros((len(self.X), len(self.Y)), dtype=np.uint16)  # size = 4x8
+        for matrix_z in population_matrix_z:
+            average = np.add(average, matrix_z)
 
-        matrix_z = self.get_matrix_z(parameters=parameters)
-        # print(matrix_z, end='\n\n')
+        return average // len(population_matrix_z)
 
-        # print(np.abs(np.subtract(self.Z, matrix_z, dtype=np.int16)), end='\n\n')
-        aptitude_function = np.abs(np.subtract(self.Z, matrix_z, dtype=np.int16)).mean()
+    def get_FA(self, population: np.array) -> np.uint8:
+        """"""
+        population_matrix_z = np.empty((0, len(self.X), len(self.Y)), dtype=np.uint16)
+        population_aptitude_function = np.empty(0, dtype=np.uint16)
 
-        return np.uint8(aptitude_function), matrix_z
+        for chromosome in population:
+            parameters = self.get_parsed_chromosome(chromosome)
+            # print(parameters.values())
+
+            matrix_z = self.get_matrix_z(parameters=parameters)
+            population_matrix_z = np.append(population_matrix_z, [matrix_z], axis=0)
+            # print(matrix_z, end='\n\n')
+
+            # print(np.abs(np.subtract(self.Z, matrix_z, dtype=np.int16)), end='\n\n')
+            aptitude_function = np.abs(np.subtract(self.Z, matrix_z, dtype=np.int16)).mean()
+            population_aptitude_function = np.append(population_aptitude_function, aptitude_function)
+
+        average_matrix_z = self.get_average_matrix_z(population_matrix_z)
+        average_aptitude_function = np.abs(np.subtract(self.Z, average_matrix_z, dtype=np.int16)).mean()
+        print('Average Z matrix\n', average_matrix_z, average_aptitude_function)
+
+        self.plot(average_matrix_z)
+
+        return population_aptitude_function, population_matrix_z
