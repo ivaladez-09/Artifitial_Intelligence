@@ -14,7 +14,10 @@ class FuzzyNet:
     """"""
 
     def __init__(self, z=None):
-        """"""
+        """
+
+        :param z: Numpy array (4x2 for this problem) with the supervised output to compare.
+        """
         self.X = np.array([1, 2, 3, 4], dtype=np.uint8)
         self.Y = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=np.uint8)
         self.WEIGHT = 5  # mx1 = mx1'(0-255) / weight
@@ -44,13 +47,24 @@ class FuzzyNet:
         return z
 
     @staticmethod
-    def mf_gaussian(x: float, c: float, r: float) -> float:
-        """"""
-        r = r if r != 0 else 0.001
-        return exp(-1 / 2 * pow((x - c) / r, 2))
+    def mf_gaussian(x: float, m: float, d: float) -> float:
+        """
+        Returns a value from x in a gaussian function
+
+        :param x: Number which you want your Gaussian
+        :param m: Float with the median of the function
+        :param d: Float with the standard deviation
+        :return: Float with the result of gaussian(x)
+        """
+        d = d if d != 0 else 0.001
+        return exp(-1 / 2 * pow((x - m) / d, 2))
 
     def get_parsed_chromosome(self, chromosome: np.array) -> dict:
-        """"""
+        """
+        Convert the values from the genetic algorithm from np.uint8 (0-255) to floating
+        :param chromosome: Numpy array with all the needed parameters to use when running this fuzzy net
+        :return: Dictionary with all the parameters already converted and classified by type.
+        """
         # Guarantee the correct size of the chromosome
         if len(chromosome) != self.total_parameters:
             error_message = f'Chromosome length shall not be different from {self.total_parameters}'
@@ -77,7 +91,11 @@ class FuzzyNet:
         return parsed_chromosome
 
     def get_matrix_z(self, parameters: dict) -> np.array:
-        """"""
+        """
+        Running the fuzzy net for each chromosome.
+        :param parameters: Dictionary with all the parameters parsed
+        :return: Numpy Array of (4x8 for this problem)
+        """
         matrix_z = np.empty((0, self.Y.size), dtype=np.uint16)  # size = 4x8
         for x in self.X:
             row_x = list()
@@ -117,31 +135,47 @@ class FuzzyNet:
         return matrix_z
 
     def plot(self, matrix_z: np.array):
-        """"""
+        """
+        Plotting the matrix 'z' and the X and Y inputs to get a 'Surface' in 3D
+        :param matrix_z: Numpy Array (4x8) for plotting
+        """
         Y, X = np.meshgrid(self.Y, self.X)
 
-        fig = plt.figure()
+        fig = plt.figure(1)
         ax = plt.axes(projection='3d')
         surf = ax.plot_surface(X, Y, matrix_z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-
         # Customize the z axis.
         ax.set_zlim(0, 100)
 
         # Add a color bar which maps values to colors.
         fig.colorbar(surf, shrink=0.5, aspect=20)
 
-        plt.show()
+        plt.show(block=False)
+        plt.pause(1)
+
+        plt.figure(1)
+        plt.clf()
 
     def get_average_matrix_z(self, population_matrix_z: np.array):
-        """"""
+        """
+        Getting an average matrix from all the population outputs.
+        :param population_matrix_z: Numpy Array (x,4,8) with the outputs for the population
+        :return: Numpy Array with an Average of all matrix 'z' outputs
+        """
         average = np.zeros((len(self.X), len(self.Y)), dtype=np.uint16)  # size = 4x8
         for matrix_z in population_matrix_z:
             average = np.add(average, matrix_z)
 
-        return average // len(population_matrix_z)
+        return average // len(population_matrix_z)  # Remove decimals
 
-    def get_FA(self, population: np.array) -> np.uint8:
-        """"""
+    def get_FA(self, population: np.array) -> (np.array, np.array):
+        """
+        Generating 2 numpy arrays with all the 'z' outputs and with all the results of
+        comparing the generated output with the base matrix z
+        Note: For FA (aptitude function) array, if the number is closer to 0, it is better.
+        :param population: Numpy Array with the population used in the genetic algorithm
+        :return: Tuple with 2 Numpy Arrays with 'z' outputs and FA results.
+        """
         population_matrix_z = np.empty((0, len(self.X), len(self.Y)), dtype=np.uint16)
         population_aptitude_function = np.empty(0, dtype=np.uint16)
 
