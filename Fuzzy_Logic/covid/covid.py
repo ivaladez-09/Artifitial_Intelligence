@@ -144,6 +144,7 @@ class FuzzyNet:
         fig = plt.figure(1)
         ax = plt.axes(projection='3d')
         surf = ax.plot_surface(X, Y, matrix_z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+        ax.plot_surface(X, Y, self.Z, linewidth=0, antialiased=False)
         # Customize the z axis.
         ax.set_zlim(0, 100)
 
@@ -168,7 +169,7 @@ class FuzzyNet:
 
         return average // len(population_matrix_z)  # Remove decimals
 
-    def get_FA(self, population: np.array) -> (np.array, np.array):
+    def get_FA(self, population: np.array) -> (np.array, np.array, int):
         """
         Generating 2 numpy arrays with all the 'z' outputs and with all the results of
         comparing the generated output with the base matrix z
@@ -178,8 +179,9 @@ class FuzzyNet:
         """
         population_matrix_z = np.empty((0, len(self.X), len(self.Y)), dtype=np.uint16)
         population_aptitude_function = np.empty(0, dtype=np.uint16)
+        best_chromosome_index = 0
 
-        for chromosome in population:
+        for index, chromosome in enumerate(population):
             parameters = self.get_parsed_chromosome(chromosome)
             # print(parameters.values())
 
@@ -191,10 +193,15 @@ class FuzzyNet:
             aptitude_function = np.abs(np.subtract(self.Z, matrix_z, dtype=np.int16)).mean()
             population_aptitude_function = np.append(population_aptitude_function, aptitude_function)
 
-        average_matrix_z = self.get_average_matrix_z(population_matrix_z)
-        average_aptitude_function = np.abs(np.subtract(self.Z, average_matrix_z, dtype=np.int16)).mean()
-        print('Average Z matrix\n', average_matrix_z, average_aptitude_function)
+            if population_aptitude_function[best_chromosome_index] > aptitude_function:
+                # Closer to 0 is better
+                best_chromosome_index = index
 
-        self.plot(average_matrix_z)
+        # average_matrix_z = self.get_average_matrix_z(population_matrix_z)
+        # average_aptitude_function = np.abs(np.subtract(self.Z, average_matrix_z, dtype=np.int16)).mean()
+        # print('Average Z matrix\n', average_matrix_z, average_aptitude_function)
 
-        return population_aptitude_function, population_matrix_z
+        # print('Best Z matrix\n', population_matrix_z[best_chromosome_index], population_aptitude_function[best_chromosome_index])
+        # self.plot(population_matrix_z[best_chromosome_index])
+
+        return population_aptitude_function, population_matrix_z, best_chromosome_index
