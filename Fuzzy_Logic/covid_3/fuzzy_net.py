@@ -36,10 +36,10 @@ class FuzzyNet:
     @staticmethod
     def get_base_z() -> tuple:
         """"""
-        z = ((30, 40, 50, 60, 80, 100, 100, 100),
-             (10, 10, 20, 30, 40, 50, 60, 60),
-             (0, 0, 10, 10, 20, 20, 25, 30),
-             (0, 0, 0, 5, 10, 10, 15, 20))
+        z = ((31.00, 35.52, 40.91, 46.26, 55.48, 63.00, 68.78, 75.8),
+             (22.57, 25.42, 29.30, 32.74, 36.74, 39.57, 42.96, 54.39),
+             (14.87, 17.74, 20.13, 24.36, 26.65, 28.57, 31.65, 37.83),
+             (05.87, 07.65, 09.39, 11.78, 14.35, 16.52, 19.26, 23.30))
         return z
 
     @staticmethod
@@ -55,7 +55,7 @@ class FuzzyNet:
         d = d if d != 0 else 0.2
         return exp(-1 / 2 * pow((x - m) / d, 2))
 
-    def plot(self, matrix_z: list):
+    def plot(self, matrix_z: list, ciclos: int, bestAptitude: float, aptitudes: list):
         """"""
         # Matrix z must be numpy array
         base_z = np.array(self.Z)
@@ -64,16 +64,30 @@ class FuzzyNet:
         # Data must follow this order (y,x) to generate the matrix 4x8
         Y, X = np.meshgrid(self.Y, self.X)
 
-        fig = plt.figure(1)
-        ax = plt.axes(projection='3d')
+        fig = plt.figure(1, figsize=(10, 8))
+        ax = fig.add_subplot(1, 2, 1, projection='3d')
+        ax.set_title("Covid19 Results")
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+
         surf = ax.plot_surface(X, Y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-        surf2 = ax.plot_surface(X, Y, base_z, cmap='gray', linewidth=0, antialiased=False)
+        surf2 = ax.plot_surface(X, Y, base_z, cmap='winter', linewidth=0, antialiased=False)
+
         # Customize the z axis.
         ax.set_zlim(0, 100)
 
         # Add a color bar which maps values to colors.
         fig.colorbar(surf, shrink=0.5, aspect=20)
         fig.colorbar(surf2, shrink=0.5, aspect=20)
+
+        ax = fig.add_subplot(1, 2, 2)
+        ax.plot([i for i in range(ciclos)], aptitudes)
+        ax.scatter([i for i in range(ciclos)], aptitudes, color='green')
+        ax.grid()
+        ax.set_title("Best aptitude: " + str(bestAptitude))
+        ax.set_xlabel("Generation")
+        ax.set_ylabel("Aptitutde")
 
         plt.show(block=False)
         plt.pause(2)

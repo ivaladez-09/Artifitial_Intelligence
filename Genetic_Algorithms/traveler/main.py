@@ -1,8 +1,8 @@
 from traveler import Traveler
 
 if __name__ == '__main__':
-    POPULATION_SIZE = 200
-    GENERATIONS = 80
+    POPULATION_SIZE = 500
+    GENERATIONS = 100
     COORDINATES = [(1, 7), (2, 5), (4, 4), (2, 3), (3, 2),
                    (1, 1), (5, 1), (7, 3), (6, 6), (10, 5),
                    (9, 8), (13, 6), (12, 3), (13, 1)]
@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
     for generation in range(1, GENERATIONS + 1):
         child_population, aptitude_function = traveler.get_next_generation(parent_population)
-        traveler.graph(child_population, aptitude_function)
+        # traveler.graph(child_population, aptitude_function)
         parent_population = child_population
         print("\n\t =================== {} Generation =================== \n\n".format(generation))
 
