@@ -191,8 +191,8 @@ class Traveler:
         self.aptitude_function_history = np.append(self.aptitude_function_history,
                                                    best_chromosome[1])
 
-        print(best_chromosome[0], self.best_chromosome[0])
-        print(best_chromosome[1], self.best_chromosome[1])
+        # print(best_chromosome[0], self.best_chromosome[0])
+        # print(best_chromosome[1], self.best_chromosome[1])
 
         return child_population, child_aptitude_function
 
